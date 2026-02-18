@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="/PI.ICS.jpg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- 🔒 META TAGS DE SEGURIDAD PARA PRODUCCIÓN -->
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- Meta tags de la aplicación -->
+    <meta
+      name="description"
+      content="PI.ICS - Plataforma Educativa de Excelencia para evaluación académica"
+    />
+    <meta name="author" content="PI.ICS Team" />
+    <meta
+      name="keywords"
+      content="educación, exámenes, evaluación, académico, PI.ICS"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Título dinámico -->
+    <title>PI.ICS - Plataforma Educativa</title>
+
+    <!-- 🔒 SCRIPT DE SEGURIDAD BÁSICA -->
+    <script>
+      // Solo prevenir iframe embedding en producción
+      if (window !== window.top && window.location.hostname !== "localhost") {
+        window.top.location = window.location;
+      }
+
+      // Prevenir view-source
+      if (window.location.protocol === "view-source:") {
+        window.location.replace("/login");
+      }
+
+      // Detectar entorno de producción
+      const isProduction =
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1";
+
+      if (isProduction) {
+        // Prevenir clic derecho solo en elementos específicos, no globalmente
+        document.addEventListener("DOMContentLoaded", function () {
+          // Solo prevenir en áreas sensibles, no en toda la página
+          const sensitiveAreas = document.querySelectorAll(
+            ".sensitive-content, .exam-content"
+          );
+          sensitiveAreas.forEach((area) => {
+            area.addEventListener("contextmenu", function (e) {
+              e.preventDefault();
+            });
+          });
+        });
+      }
+    </script>
+
+    <!-- Estilos de producción -->
+    <style>
+      /* Logo y branding */
+      .app-logo {
+        background-image: url("./PI.ICS.jpg");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      /* Estilos de seguridad aplicados solo cuando sea necesario */
+      .production-mode .sensitive-content {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      /* Permitir selección normal en formularios */
+      .production-mode input,
+      .production-mode textarea,
+      .production-mode [contenteditable],
+      .production-mode .selectable {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+
+      /* Estilos para modo examen */
+      .exam-mode * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+      }
+
+      .exam-mode input,
+      .exam-mode textarea {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+
+      /* Loading spinner personalizado */
+      .pi-loader {
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Prevenir debug styles */
+      .no-select {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div
+        style="
+          text-align: center;
+          padding: 50px;
+          font-family: Arial, sans-serif;
+          background-color: #f8f9fa;
+        "
+      >
+        <div
+          style="
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          "
+        >
+          <!-- Logo en noscript -->
+          <div
+            style="
+              width: 80px;
+              height: 80px;
+              margin: 0 auto 20px;
+              background-image: url('/PI.ICS.jpg');
+              background-size: contain;
+              background-repeat: no-repeat;
+              background-position: center;
+            "
+          ></div>
+
+          <h2 style="color: #dc3545; margin-bottom: 20px">
+            🚫 JavaScript Requerido
+          </h2>
+          <p style="color: #6c757d; margin-bottom: 15px">
+            <strong>PI.ICS</strong> requiere JavaScript para funcionar
+            correctamente.
+          </p>
+          <p style="color: #6c757d; margin-bottom: 20px">
+            Por favor habilita JavaScript en tu navegador y recarga la página.
+          </p>
+
+          <div
+            style="
+              background: #e9ecef;
+              padding: 20px;
+              border-radius: 10px;
+              font-size: 14px;
+              color: #495057;
+              border-left: 4px solid #007bff;
+            "
+          >
+            <strong>📞 Soporte Técnico PI.ICS:</strong><br /><br />
+            📧 <strong>Email:</strong> wlaverde5@gmail.com<br />
+            📱 <strong>Teléfono:</strong> +57 312 4473537<br />
+            🌐 <strong>Web:</strong> https://examenes-c84bf.web.app<br /><br />
+            <em>Horario de atención: Lunes a Viernes, 8:00 AM - 6:00 PM</em>
+          </div>
+        </div>
+      </div>
+    </noscript>
+
+    <!-- Loading inicial con logo -->
+    <div
+      id="initial-loader"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      "
+    >
+      <div
+        class="app-logo"
+        style="
+          width: 120px;
+          height: 120px;
+          margin-bottom: 30px;
+          border-radius: 20px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        "
+      ></div>
+      <div class="pi-loader"></div>
+      <p
+        style="
+          color: white;
+          font-family: Arial, sans-serif;
+          margin-top: 20px;
+          font-size: 18px;
+          font-weight: bold;
+        "
+      >
+        PI.ICS
+      </p>
+      <p
+        style="
+          color: rgba(255, 255, 255, 0.8);
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+        "
+      >
+        Plataforma Educativa
+      </p>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Script para remover loader -->
+    <script>
+      // Remover loader cuando la app esté lista
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          const loader = document.getElementById("initial-loader");
+          if (loader) {
+            loader.style.opacity = "0";
+            loader.style.transition = "opacity 0.5s ease-out";
+            setTimeout(() => loader.remove(), 500);
+          }
+        }, 1000);
+      });
+
+      // Información de la aplicación (solo visible en consola de desarrollo)
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        console.log(`
+          🎓 PI.ICS - Plataforma Educativa de Excelencia
+          👨‍💻 Modo: Desarrollo
+          📧 Soporte: wlaverde5@gmail.com
+          📞 Teléfono: +57 312 4473537
+          🌐 Web: https://examenes-c84bf.web.app
+        `);
+      }
+    </script>
+  </body>
+</html>
