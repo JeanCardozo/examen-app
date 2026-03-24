@@ -61,11 +61,8 @@ export default function Results() {
         setLoading(true);
         setError(null);
 
-        console.log("🔍 Cargando resultados para attemptId:", attemptId);
-
         // Obtener el intento completo
         const attemptData = await getAttemptById(attemptId);
-        console.log("📊 Datos del intento:", attemptData);
 
         if (!attemptData) {
           throw new Error("No se encontraron los resultados del examen");
@@ -78,13 +75,9 @@ export default function Results() {
             const examDoc = await getDoc(doc(db, "exams", attemptData.examId));
             if (examDoc.exists()) {
               examInfo = { id: examDoc.id, ...examDoc.data() };
-              console.log("📋 Información del examen cargada:", examInfo.title);
             }
           } catch (examError) {
-            console.warn(
-              "⚠️ Error cargando información del examen:",
-              examError
-            );
+            // Error loading exam info - continue without it
           }
         }
 
@@ -110,10 +103,6 @@ export default function Results() {
                     subjectName = `Materia ${subjectId}`;
                   }
                 } catch (subjectError) {
-                  console.warn(
-                    `⚠️ Error cargando materia ${subjectId}:`,
-                    subjectError
-                  );
                   subjectName = `Materia ${subjectId}`;
                 }
               }
@@ -127,10 +116,6 @@ export default function Results() {
                     : 0,
               };
             } catch (subjectError) {
-              console.warn(
-                `⚠️ Error procesando materia ${subjectId}:`,
-                subjectError
-              );
               processedScoreBySubject[subjectId] = {
                 ...score,
                 subjectName: `Materia ${subjectId}`,
@@ -142,6 +127,57 @@ export default function Results() {
             }
           }
         }
+
+        // Resolver ID de opción a texto legible
+        const resolveAnswerToText = (answer, options, type) => {
+          if (!answer && answer !== false) return null;
+
+          // true-false: normalizar directamente
+          if (type === "true-false") {
+            if (answer === true || answer === "true" || answer === "Verdadero") return "Verdadero";
+            if (answer === false || answer === "false" || answer === "Falso") return "Falso";
+            return String(answer);
+          }
+
+          // Si es un array, resolver cada elemento
+          if (Array.isArray(answer)) {
+            return answer.map((a, idx) => {
+              const resolved = resolveSingleAnswer(a, options, idx);
+              return resolved;
+            });
+          }
+
+          return resolveSingleAnswer(answer, options, 0);
+        };
+
+        const resolveSingleAnswer = (answerId, options, fallbackIdx) => {
+          if (!options || !Array.isArray(options)) return String(answerId);
+
+          // Try to find by id
+          const byId = options.find(o => o.id === answerId || o._id === answerId);
+          if (byId) {
+            const idx = options.indexOf(byId);
+            const letter = String.fromCharCode(65 + idx);
+            return `${letter}. ${byId.text || byId.label || answerId}`;
+          }
+
+          // Try to find by index (if answerId is a number)
+          if (typeof answerId === "number" && options[answerId]) {
+            const letter = String.fromCharCode(65 + answerId);
+            return `${letter}. ${options[answerId].text || options[answerId].label || answerId}`;
+          }
+
+          // Try to find by text match
+          const byText = options.find(o => o.text === answerId || o.label === answerId);
+          if (byText) {
+            const idx = options.indexOf(byText);
+            const letter = String.fromCharCode(65 + idx);
+            return `${letter}. ${byText.text || byText.label}`;
+          }
+
+          // Fallback: return as-is
+          return String(answerId);
+        };
 
         // 🔧 PROCESAR DETALLES DE PREGUNTAS CON DATOS COMPLETOS DE FIRESTORE
         const processedQuestionDetails = [];
@@ -179,10 +215,7 @@ export default function Results() {
                     };
                   }
                 } catch (questionError) {
-                  console.warn(
-                    `⚠️ Error cargando pregunta ${questionDetail.questionId}:`,
-                    questionError
-                  );
+                  // Error loading question - use attempt data as fallback
                 }
               }
 
@@ -197,73 +230,48 @@ export default function Results() {
                     subjectName = subjectDoc.data().name;
                   }
                 } catch (subjectError) {
-                  console.warn(
-                    `⚠️ Error cargando materia ${questionDetail.subject}:`,
-                    subjectError
-                  );
+                  // Error loading subject - continue without name
                 }
               }
 
               // 🎯 FORMATEAR RESPUESTAS CORRECTAS SEGÚN TIPO
-              const formatCorrectAnswers = (correctAnswers, type) => {
+              const formatCorrectAnswers = (correctAnswers, type, options) => {
                 if (!correctAnswers && correctAnswers !== false)
                   return "No definida";
 
-                if (Array.isArray(correctAnswers)) {
-                  if (correctAnswers.length === 0) return "No definida";
-                  return correctAnswers.join(", ");
+                const resolved = resolveAnswerToText(correctAnswers, options, type);
+                if (Array.isArray(resolved)) {
+                  return resolved.length === 0 ? "No definida" : resolved.join(", ");
                 }
-
-                // Para true-false, normalizar la visualización
-                if (type === "true-false") {
-                  if (
-                    correctAnswers === true ||
-                    correctAnswers === "true" ||
-                    correctAnswers === "Verdadero"
-                  ) {
-                    return "Verdadero";
-                  }
-                  if (
-                    correctAnswers === false ||
-                    correctAnswers === "false" ||
-                    correctAnswers === "Falso"
-                  ) {
-                    return "Falso";
-                  }
-                }
-
-                return correctAnswers.toString();
+                return resolved || "No definida";
               };
 
               // 🎯 FORMATEAR RESPUESTA SELECCIONADA
-              const formatSelectedAnswer = (selectedAnswer, type) => {
+              const formatSelectedAnswer = (selectedAnswer, type, options, selectedTexts) => {
                 if (!selectedAnswer && selectedAnswer !== false)
                   return "Sin respuesta";
 
-                if (Array.isArray(selectedAnswer)) {
-                  if (selectedAnswer.length === 0) return "Sin respuesta";
-                  return selectedAnswer.join(", ");
+                // If we have pre-resolved texts from the attempt, use them
+                if (selectedTexts && Array.isArray(selectedTexts) && selectedTexts.length > 0) {
+                  // Format with letter prefix if options available
+                  if (options && Array.isArray(options)) {
+                    const formatted = selectedTexts.map(text => {
+                      const optIdx = options.findIndex(o => o.text === text || o.label === text);
+                      if (optIdx >= 0) {
+                        return `${String.fromCharCode(65 + optIdx)}. ${text}`;
+                      }
+                      return text;
+                    });
+                    return formatted.join(", ");
+                  }
+                  return selectedTexts.join(", ");
                 }
 
-                // Para true-false, normalizar la visualización
-                if (type === "true-false") {
-                  if (
-                    selectedAnswer === true ||
-                    selectedAnswer === "true" ||
-                    selectedAnswer === "Verdadero"
-                  ) {
-                    return "Verdadero";
-                  }
-                  if (
-                    selectedAnswer === false ||
-                    selectedAnswer === "false" ||
-                    selectedAnswer === "Falso"
-                  ) {
-                    return "Falso";
-                  }
+                const resolved = resolveAnswerToText(selectedAnswer, options, type);
+                if (Array.isArray(resolved)) {
+                  return resolved.length === 0 ? "Sin respuesta" : resolved.join(", ");
                 }
-
-                return selectedAnswer.toString();
+                return resolved || "Sin respuesta";
               };
 
               processedQuestionDetails.push({
@@ -272,18 +280,17 @@ export default function Results() {
                 subjectName: subjectName || "Materia no identificada",
                 correctAnswersText: formatCorrectAnswers(
                   fullQuestionData.correctAnswers,
-                  fullQuestionData.type
+                  fullQuestionData.type,
+                  fullQuestionData.options
                 ),
                 selectedAnswerText: formatSelectedAnswer(
                   fullQuestionData.selectedAnswer,
-                  fullQuestionData.type
+                  fullQuestionData.type,
+                  fullQuestionData.options,
+                  fullQuestionData.selectedAnswerTexts
                 ),
               });
             } catch (questionError) {
-              console.warn(
-                "⚠️ Error procesando detalle de pregunta:",
-                questionError
-              );
               processedQuestionDetails.push({
                 ...questionDetail,
                 questionNumber: i + 1,
@@ -306,12 +313,6 @@ export default function Results() {
         setData(processedData);
         setExamData(examInfo);
 
-        console.log("✅ Resultados procesados correctamente:", {
-          totalQuestions: processedQuestionDetails.length,
-          subjects: Object.keys(processedScoreBySubject).length,
-          status: processedData.status,
-          hasExamInfo: !!examInfo,
-        });
       } catch (err) {
         console.error("❌ Error cargando resultados:", err);
         setError(err.message || "No se pudieron cargar los resultados");
@@ -378,7 +379,6 @@ export default function Results() {
       }
       return `${minutes}m ${seconds}s`;
     } catch (timeError) {
-      console.warn("⚠️ Error calculando tiempo:", timeError);
       return "No disponible";
     }
   };
@@ -991,7 +991,7 @@ export default function Results() {
                             <h4 className="font-medium text-gray-800 mb-2">
                               📋 Pregunta:
                             </h4>
-                            <p className="text-gray-700 leading-relaxed">
+                            <p className="text-gray-700 leading-relaxed break-words">
                               {question.questionText ||
                                 question.text ||
                                 "Pregunta sin texto"}
@@ -1004,7 +1004,7 @@ export default function Results() {
                                 📝 Tu respuesta:
                               </h5>
                               <p
-                                className={`font-bold ${
+                                className={`font-bold break-words ${
                                   question.isCorrect
                                     ? "text-green-600"
                                     : "text-red-600"
@@ -1017,7 +1017,7 @@ export default function Results() {
                               <h5 className="font-medium text-gray-700 mb-2">
                                 ✅ Respuesta correcta:
                               </h5>
-                              <p className="font-bold text-green-600">
+                              <p className="font-bold text-green-600 break-words">
                                 {question.correctAnswersText}
                               </p>
                             </div>
