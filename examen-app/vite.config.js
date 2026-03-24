@@ -21,7 +21,8 @@ export default defineConfig(({ mode }) => ({
 
   // Configuración del servidor de desarrollo
   server: {
-    port: 5173,
+    port: 3000,
+    host: '127.0.0.1',
     strictPort: false,
     open: false,
   },
