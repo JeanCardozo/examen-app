@@ -144,7 +144,6 @@ export default function ViewAttempts() {
             examsData[examId] = { id: examDoc.id, ...examDoc.data() };
           }
         } catch (error) {
-          console.warn(`Error cargando examen ${examId}:`, error);
         }
       }
 
@@ -186,12 +185,6 @@ export default function ViewAttempts() {
         return attempt;
       });
 
-      console.log("✅ Datos procesados:", {
-        attempts: processedAttempts.length,
-        exams: Object.keys(examsData).length,
-        subjects: Object.keys(subjectsData).length,
-      });
-
       setAttempts(processedAttempts);
       setExams(examsData);
       setSubjects(subjectsData);
@@ -221,12 +214,6 @@ export default function ViewAttempts() {
 
     const finishedAttempts = attempts.filter((a) => a.status === "finished");
 
-    console.log(
-      "📊 Calculando estadísticas para:",
-      finishedAttempts.length,
-      "intentos"
-    );
-
     // Datos de progreso temporal
     const progressData = finishedAttempts.map((attempt, index) => {
       const percentage = calculateAttemptPercentage(attempt);
@@ -252,7 +239,6 @@ export default function ViewAttempts() {
             const total = Number(score?.total) || 0;
 
             if (total === 0) {
-              console.warn(`⚠️ Materia ${subjectName} tiene total 0:`, score);
               return;
             }
 
@@ -322,13 +308,6 @@ export default function ViewAttempts() {
               progressData.length
           )
         : 0;
-
-    console.log("📈 Estadísticas calculadas:", {
-      subjectAverages: subjectAverages.length,
-      overallAverage,
-      bestScore,
-      hasData: subjectAverages.length > 0,
-    });
 
     return {
       progressData,
@@ -428,7 +407,7 @@ export default function ViewAttempts() {
               <p className="font-semibold text-gray-700 mb-1">
                 Nombre Completo
               </p>
-              <p className="text-lg font-medium text-gray-900">
+              <p className="text-lg font-medium text-gray-900 truncate" title={student.displayName || "No especificado"}>
                 {student.displayName || "No especificado"}
               </p>
             </div>
@@ -437,7 +416,7 @@ export default function ViewAttempts() {
               <p className="font-semibold text-gray-700 mb-1">
                 Correo Electrónico
               </p>
-              <p className="text-lg font-medium text-gray-900">
+              <p className="text-lg font-medium text-gray-900 truncate max-w-xs break-words" title={student.email}>
                 {student.email}
               </p>
             </div>
@@ -681,7 +660,7 @@ export default function ViewAttempts() {
                                           COLORS[index % COLORS.length],
                                       }}
                                     />
-                                    <span className="text-sm font-medium">
+                                    <span className="text-sm font-medium break-words">
                                       {subject.subject}
                                     </span>
                                   </div>
@@ -793,13 +772,13 @@ export default function ViewAttempts() {
                     attempts.map((attempt, index) => (
                       <div
                         key={attempt.id}
-                        className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300"
+                        className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300 overflow-hidden"
                       >
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Información general del intento */}
                           <div>
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-xl font-bold text-gray-800">
+                            <div className="flex items-center justify-between mb-4 gap-2 min-w-0">
+                              <h3 className="text-xl font-bold text-gray-800 truncate" title={exams[attempt.examId]?.title || "Examen no disponible"}>
                                 {exams[attempt.examId]?.title ||
                                   "Examen no disponible"}
                               </h3>
@@ -904,7 +883,7 @@ export default function ViewAttempts() {
                                           className="bg-gray-50 rounded-lg p-4 border border-gray-200"
                                         >
                                           <div className="flex items-center justify-between mb-2">
-                                            <span className="font-medium text-gray-800">
+                                            <span className="font-medium text-gray-800 truncate max-w-[200px] inline-block break-words" title={subject}>
                                               {subject}
                                             </span>
                                             <span
@@ -977,7 +956,7 @@ export default function ViewAttempts() {
               </h3>
               <p className="text-yellow-700 mt-1">
                 No se encontró ningún estudiante registrado con el correo:{" "}
-                <strong>{searchEmail}</strong>
+                <strong className="break-words">{searchEmail}</strong>
               </p>
               <p className="text-yellow-600 text-sm mt-2">
                 Verifica que el correo electrónico esté escrito correctamente y
