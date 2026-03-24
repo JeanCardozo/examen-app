@@ -21,6 +21,8 @@ import {
   ArrowRight,
   Shield,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export default function Exam() {
@@ -42,22 +44,18 @@ export default function Exam() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [startTime, setStartTime] = useState(null);
 
-  // 🔒 Estados de seguridad
+  // Estado para enunciados (question group text)
+  const [showEnunciado, setShowEnunciado] = useState(true);
+
+  // Estados de seguridad
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [isExamActive, setIsExamActive] = useState(false);
   const [securityWarningShown, setSecurityWarningShown] = useState(false);
 
-  // 🔥 FUNCIÓN MEJORADA: Validar respuesta correcta
+  // Validar respuesta correcta
   const validateAnswer = useCallback((question, userAnswer) => {
     if (!question || (userAnswer === undefined && userAnswer !== false))
       return false;
-
-    console.log("🔍 Validando respuesta:", {
-      questionId: question.id,
-      type: question.type,
-      userAnswer,
-      correctAnswers: question.correctAnswers,
-    });
 
     switch (question.type) {
       case "icfes": {
@@ -105,23 +103,15 @@ export default function Exam() {
     }
   }, []);
 
-  // 🔥 FUNCIÓN CRÍTICA COMPLETAMENTE CORREGIDA: Manejar respuestas
+  // Manejar respuestas
   const handleAnswer = useCallback(
     (optionIdentifier) => {
       const questionId = questions[currentQuestionIndex]?.id;
       const currentQuestion = questions[currentQuestionIndex];
 
       if (!questionId || !currentQuestion || !isExamActive) {
-        console.log("❌ Condiciones no válidas para responder");
         return;
       }
-
-      console.log("📝 Procesando respuesta:", {
-        questionId,
-        type: currentQuestion.type,
-        optionIdentifier,
-        currentState: answers[questionId],
-      });
 
       setAnswers((prevAnswers) => {
         const newAnswers = { ...prevAnswers };
@@ -174,15 +164,15 @@ export default function Exam() {
     [questions, currentQuestionIndex, isExamActive, answers],
   );
 
-  // 🧠 SISTEMA DE ORDENAMIENTO ADAPTATIVO POR DIFICULTAD
+  // Sistema de ordenamiento adaptativo por dificultad
   const [adaptiveOrdering, setAdaptiveOrdering] = useState({
     enabled: true,
-    currentStreak: 0, // Racha de respuestas correctas/incorrectas
-    lastAnswers: [], // Últimas 3 respuestas para determinar tendencia
-    difficultyLevel: "medium", // easy, medium, hard
+    currentStreak: 0,
+    lastAnswers: [],
+    difficultyLevel: "medium",
   });
 
-  // 🔥 FUNCIÓN: Actualizar ordenamiento adaptativo
+  // Actualizar ordenamiento adaptativo
   const updateAdaptiveOrdering = useCallback((questionId, isCorrect) => {
     setAdaptiveOrdering((prev) => {
       const newLastAnswers = [...prev.lastAnswers, isCorrect].slice(-3);
@@ -219,13 +209,6 @@ export default function Exam() {
         newDifficultyLevel = "easy";
       }
 
-      console.log("🧠 Ordenamiento adaptativo actualizado:", {
-        isCorrect,
-        newStreak,
-        newDifficultyLevel,
-        lastAnswers: newLastAnswers,
-      });
-
       return {
         ...prev,
         currentStreak: newStreak,
@@ -235,7 +218,7 @@ export default function Exam() {
     });
   }, []);
 
-  // 🔥 FUNCIÓN: Ordenar preguntas por dificultad adaptativa
+  // Ordenar preguntas por dificultad adaptativa
   const getNextQuestionIndex = useCallback(() => {
     if (!adaptiveOrdering.enabled || questions.length === 0) {
       return currentQuestionIndex + 1;
@@ -258,10 +241,6 @@ export default function Exam() {
 
       // Si no es la siguiente inmediata, reordenar
       if (realIndex !== currentQuestionIndex + 1) {
-        console.log(
-          `🔄 Reordenando: Moviendo pregunta de dificultad ${targetDifficulty} al frente`,
-        );
-
         // Crear nuevo array reordenado
         const newQuestions = [...questions];
         const [questionToMove] = newQuestions.splice(realIndex, 1);
@@ -275,8 +254,7 @@ export default function Exam() {
     return currentQuestionIndex + 1;
   }, [questions, currentQuestionIndex, adaptiveOrdering]);
 
-  // 🔥 FUNCIÓN MODIFICADA: Navegar a la siguiente pregunta con ordenamiento
-
+  // Navegar a la siguiente pregunta con ordenamiento adaptativo
   const goToNextQuestion = useCallback(() => {
     if (!isExamActive) return;
 
@@ -287,7 +265,7 @@ export default function Exam() {
     }
   }, [isExamActive, questions.length, getNextQuestionIndex]);
 
-  // 🔥 MODIFICACIÓN: Integrar evaluación adaptativa en submitExam
+  // Integrar evaluación adaptativa en submitExam
   const submitExam = useCallback(
     async (isTimeUp = false, isAborted = false) => {
       if (submitting || !attemptId || !questions.length) return;
@@ -296,11 +274,6 @@ export default function Exam() {
       setIsExamActive(false);
 
       try {
-        console.log("📤 Enviando examen con ordenamiento adaptativo:", {
-          attemptId,
-          questionsCount: questions.length,
-          adaptiveData: adaptiveOrdering,
-        });
 
         const results = questions.map((question) => {
           const userAnswer = answers[question.id];
@@ -368,7 +341,7 @@ export default function Exam() {
         if (tabSwitchCount > 0) alertLog.push(`tabSwitches: ${tabSwitchCount}`);
         if (!isAborted && !isTimeUp) alertLog.push("submitted");
 
-        // 🧠 Incluir datos del ordenamiento adaptativo
+        // Incluir datos del ordenamiento adaptativo
         await finishAttempt(attemptId, {
           detailPerQuestion: results,
           scoreBySubject,
@@ -381,7 +354,6 @@ export default function Exam() {
             timeUp: isTimeUp,
             aborted: isAborted,
           },
-          // 🆕 Datos del sistema adaptativo
           adaptiveOrderingData: {
             finalDifficultyLevel: adaptiveOrdering.difficultyLevel,
             totalStreak: adaptiveOrdering.currentStreak,
@@ -403,32 +375,20 @@ export default function Exam() {
             icon: "info",
             title: "¡Tiempo agotado!",
             text: "El tiempo se ha agotado. Tu examen ha sido enviado automáticamente.",
-            confirmButtonColor: "#10B981",
+            confirmButtonColor: "#1E3A8A",
           });
         } else {
           await Swal.fire({
             icon: "success",
             title: "¡Examen enviado!",
-            html: `
-            <div class="text-center">
-              <p class="mb-3">Tu examen ha sido enviado exitosamente.</p>
-              <div class="bg-blue-50 p-3 rounded-lg">
-                <p class="text-blue-800 text-sm">
-                  🧠 Nivel final de dificultad: <strong>${adaptiveOrdering.difficultyLevel}</strong>
-                </p>
-                <p class="text-blue-600 text-xs">
-                  El sistema adaptativo ajustó las preguntas según tu rendimiento
-                </p>
-              </div>
-            </div>
-          `,
-            confirmButtonColor: "#10B981",
+            text: "Tu examen ha sido enviado exitosamente.",
+            confirmButtonColor: "#1E3A8A",
           });
         }
 
         nav(`/results/${attemptId}`);
       } catch (error) {
-        console.error("❌ Error submitting exam:", error);
+        console.error("Error submitting exam:", error);
         await Swal.fire({
           icon: "error",
           title: "Error al enviar",
@@ -456,19 +416,17 @@ export default function Exam() {
   // Manejar tiempo agotado
   const handleTimeUp = useCallback(async () => {
     if (submitting || !attemptId || !isExamActive) return;
-    console.log("⏰ Tiempo agotado");
     setIsTimeUp(true);
     await submitExam(true, false);
   }, [submitting, attemptId, isExamActive, submitExam]);
 
-  // 🔒 Manejar cambio de pestaña
+  // Manejar cambio de pestaña
   const handleTabSwitch = useCallback(async () => {
     if (!attemptId || !isExamActive || submitting) return;
 
     const newCount = tabSwitchCount + 1;
     setTabSwitchCount(newCount);
 
-    console.log(`🚨 Cambio de pestaña detectado. Conteo: ${newCount}`);
 
     if (newCount === 1 && !securityWarningShown) {
       setSecurityWarningShown(true);
@@ -561,22 +519,17 @@ export default function Exam() {
     nav,
   ]);
 
-  // 🔥 SOLUCIÓN CRÍTICA: Cargar examen - COMPLETAMENTE REESCRITO
+  // Cargar examen
   useEffect(() => {
     let isMounted = true;
 
     const loadExam = async () => {
       if (!examId || !auth.currentUser) {
-        console.log("❌ ExamId o usuario no disponible:", {
-          examId,
-          user: auth.currentUser,
-        });
         setLoading(false);
         return;
       }
 
       try {
-        console.log("🔄 Iniciando carga del examen:", examId);
         setLoading(true);
 
         // 1. Cargar datos del examen
@@ -586,8 +539,6 @@ export default function Exam() {
         }
 
         const examData = { id: examSnap.id, ...examSnap.data() };
-        console.log("📋 Datos del examen cargados:", examData.title);
-
         // 2. Verificar si el examen está disponible
         const now = new Date();
         const deadline = examData.deadline?.toDate
@@ -600,7 +551,7 @@ export default function Exam() {
               icon: "error",
               title: "Examen vencido",
               text: "Este examen ya no está disponible.",
-              confirmButtonColor: "#3B82F6",
+              confirmButtonColor: "#1E3A8A",
             });
             nav("/student/exams");
           }
@@ -625,7 +576,7 @@ export default function Exam() {
               text: `Ya has completado el máximo de ${
                 examData.maxAttempts || 1
               } intento(s) para este examen.`,
-              confirmButtonColor: "#3B82F6",
+              confirmButtonColor: "#1E3A8A",
             });
             nav("/student/exams");
           }
@@ -633,7 +584,6 @@ export default function Exam() {
         }
 
         // 4. Cargar preguntas con datos completos y normalizados
-        console.log("📚 Cargando preguntas...");
         const questionsData = await Promise.all(
           (examData.questionRefs || []).map(async (questionId) => {
             try {
@@ -641,7 +591,7 @@ export default function Exam() {
                 doc(db, "questions", questionId),
               );
               if (!questionSnap.exists()) {
-                console.warn(`⚠️ Pregunta no encontrada: ${questionId}`);
+                console.warn(`Pregunta no encontrada: ${questionId}`);
                 return null;
               }
 
@@ -659,7 +609,7 @@ export default function Exam() {
                   }
                 } catch (subjectError) {
                   console.warn(
-                    `⚠️ Error cargando materia ${questionData.subject}:`,
+                    `Error cargando materia ${questionData.subject}:`,
                     subjectError,
                   );
                 }
@@ -756,7 +706,7 @@ export default function Exam() {
                 correctAnswers: normalizedCorrectAnswers,
               };
             } catch (error) {
-              console.error(`❌ Error cargando pregunta ${questionId}:`, error);
+              console.error(`Error cargando pregunta ${questionId}:`, error);
               return null;
             }
           }),
@@ -769,17 +719,46 @@ export default function Exam() {
           );
         }
 
+        // Load enunciados (question group text) for questions that have a groupId
+        const uniqueGroupIds = [
+          ...new Set(
+            validQuestions
+              .map((q) => q.groupId)
+              .filter(Boolean),
+          ),
+        ];
+
+        const groupTexts = {};
+        await Promise.all(
+          uniqueGroupIds.map(async (groupId) => {
+            try {
+              const groupSnap = await getDoc(
+                doc(db, "questionGroups", groupId),
+              );
+              if (groupSnap.exists()) {
+                groupTexts[groupId] = groupSnap.data().text;
+              }
+            } catch (groupError) {
+              console.warn(`Error cargando grupo ${groupId}:`, groupError);
+            }
+          }),
+        );
+
+        // Attach groupText to each question that has a groupId
+        const questionsWithGroups = validQuestions.map((q) => {
+          if (q.groupId && groupTexts[q.groupId]) {
+            return { ...q, groupText: groupTexts[q.groupId] };
+          }
+          return q;
+        });
+
         // Mezclar preguntas aleatoriamente
-        const shuffledQuestions = validQuestions.sort(
+        const shuffledQuestions = questionsWithGroups.sort(
           () => Math.random() - 0.5,
         );
 
         if (!isMounted) return;
         setQuestions(shuffledQuestions);
-        console.log(
-          "✅ Preguntas cargadas correctamente:",
-          shuffledQuestions.length,
-        );
 
         // 5. Mostrar instrucciones de seguridad
         const result = await Swal.fire({
@@ -800,7 +779,7 @@ export default function Exam() {
           </div>
         `,
           confirmButtonText: "Comenzar Examen",
-          confirmButtonColor: "#10B981",
+          confirmButtonColor: "#1E3A8A",
           allowOutsideClick: false,
           allowEscapeKey: false,
         });
@@ -811,7 +790,6 @@ export default function Exam() {
         }
 
         // 6. Crear intento
-        console.log("🆕 Creando nuevo intento...");
         const newAttemptId = await createAttempt({
           userId: auth.currentUser.uid,
           examId: examId,
@@ -822,10 +800,9 @@ export default function Exam() {
           setStartTime(new Date());
           setTimeRemaining(examData.timeLimit * 60);
           setIsExamActive(true);
-          console.log("✅ Examen iniciado correctamente:", newAttemptId);
         }
       } catch (error) {
-        console.error("❌ Error loading exam:", error);
+        console.error("Error loading exam:", error);
         if (isMounted) {
           await Swal.fire({
             icon: "error",
@@ -833,7 +810,7 @@ export default function Exam() {
             text:
               error.message ||
               "Hubo un problema al cargar el examen. Inténtalo de nuevo.",
-            confirmButtonColor: "#3B82F6",
+            confirmButtonColor: "#1E3A8A",
           });
           nav("/student/exams");
         }
@@ -875,13 +852,11 @@ export default function Exam() {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log("🚨 Pestaña oculta detectada");
         handleTabSwitch();
       }
     };
 
     const handleFocusOut = () => {
-      console.log("🚨 Pérdida de foco detectada");
       handleTabSwitch();
     };
 
@@ -944,7 +919,7 @@ export default function Exam() {
         </div>
       `,
       showCancelButton: true,
-      confirmButtonColor: "#10B981",
+      confirmButtonColor: "#1E3A8A",
       cancelButtonColor: "#6B7280",
       confirmButtonText: "✅ Sí, enviar examen",
       cancelButtonText: "❌ Cancelar",
@@ -1093,7 +1068,7 @@ export default function Exam() {
                 Navegación
               </h3>
 
-              {/* 🔥 NAVEGACIÓN LATERAL MEJORADA */}
+              {/* Navegación lateral */}
               <div className="grid grid-cols-5 lg:grid-cols-4 gap-2 mb-6">
                 {questions.map((_, index) => {
                   const questionId = questions[index]?.id;
@@ -1183,7 +1158,7 @@ export default function Exam() {
 
           {/* Área principal de la pregunta */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div key={currentQuestion?.id} className="bg-white rounded-2xl shadow-lg p-8 animate-fadeInUp">
               {/* Header de la pregunta */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -1220,6 +1195,42 @@ export default function Exam() {
                   </span>
                 </div>
 
+                {/* Enunciado (group text) panel */}
+                {currentQuestion?.groupText && (
+                  <div className="mb-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-indigo-200 overflow-hidden">
+                      <button
+                        onClick={() => setShowEnunciado((prev) => !prev)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-indigo-50/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-5 h-5 text-indigo-600" />
+                          <span className="text-sm font-semibold text-indigo-800">
+                            Enunciado
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-indigo-600">
+                            {showEnunciado ? "Ocultar" : "Ver"} Enunciado
+                          </span>
+                          {showEnunciado ? (
+                            <ChevronUp className="w-4 h-4 text-indigo-600" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-indigo-600" />
+                          )}
+                        </div>
+                      </button>
+                      {showEnunciado && (
+                        <div className="px-4 pb-4">
+                          <p className="text-sm text-indigo-900 leading-relaxed whitespace-pre-line">
+                            {currentQuestion.groupText}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <h2 className="text-xl text-gray-800 leading-relaxed">
                   {currentQuestion?.text || "Sin texto disponible"}
                 </h2>
@@ -1255,7 +1266,7 @@ export default function Exam() {
                 </div>
               )}
 
-              {/* 🔥 OPCIONES DE RESPUESTA COMPLETAMENTE CORREGIDAS */}
+              {/* Opciones de respuesta */}
               <div className="space-y-3 mb-8">
                 {currentQuestion?.type === "true-false"
                   ? // eslint-disable-next-line no-unused-vars
@@ -1308,16 +1319,7 @@ export default function Exam() {
                       return (
                         <button
                           key={optionId}
-                          onClick={() => {
-                            console.log("🖱️ Click en opción:", {
-                              optionId,
-                              optionText: option.text,
-                              type: currentQuestion.type,
-                              currentlySelected: isSelected,
-                              currentAnswers: answers[currentQuestion.id],
-                            });
-                            handleAnswer(optionId);
-                          }}
+                          onClick={() => handleAnswer(optionId)}
                           disabled={!isExamActive}
                           className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
                             isSelected
@@ -1366,7 +1368,7 @@ export default function Exam() {
                     })}
               </div>
 
-              {/* 🔥 PANEL MEJORADO PARA RESPUESTAS MÚLTIPLES ICFES */}
+              {/* Panel de respuestas seleccionadas (ICFES) */}
               {currentQuestion?.type === "icfes" &&
                 Array.isArray(answers[currentQuestion.id]) &&
                 answers[currentQuestion.id].length > 0 && (
@@ -1451,12 +1453,9 @@ export default function Exam() {
                     );
                   })()}
                 </div>
-                // 🔥 MODIFICACIÓN: Botón "Siguiente" con ordenamiento
-                adaptativo
                 {currentQuestionIndex < questions.length - 1 ? (
                   <button
                     onClick={() => {
-                      // Evaluar respuesta actual antes de continuar
                       const currentAnswer = answers[currentQuestion?.id];
                       if (currentAnswer !== undefined) {
                         const isCorrect = validateAnswer(
@@ -1465,8 +1464,6 @@ export default function Exam() {
                         );
                         updateAdaptiveOrdering(currentQuestion.id, isCorrect);
                       }
-
-                      // Navegar con ordenamiento adaptativo
                       goToNextQuestion();
                     }}
                     disabled={!isExamActive}
